@@ -1,0 +1,4 @@
+firebase-debug.log
+public/dist/**/*
+node_modules/**/*
+functions/node_modules/**/*
