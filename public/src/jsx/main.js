@@ -1,20 +1,50 @@
 class Login extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      nickname : ''
+    };
+  }
 
+  componentWillReceiveProps(nextProps) {
+    var that = this;
+    if(nextProps && nextProps.data) {
+      firebase.database().ref('/users/' + nextProps.data.uid).once('value').then(function(snapshot) {
+        var username = (snapshot.val() && snapshot.val().nickname) || 'none';
+        that.setState({
+          nickname : username
+        });
+      });
+    };
+  };
+  
+  updateNickname() {
+    this.props.updateNickname(this.state.nickname)
+  }
+
+  handleChange(event) {
+    this.setState({nickname: event.target.value});
+  }
+  
   render() {
     if(!this.props.data) {
-    return (
-    <div className="login">
-      <button onClick={this.props.triggerLogin}>Google login</button>
-    </div>
-    )
-  } else {
-    return (
-      <div className="login">
+      return (
+        <div className="login">
+        <button onClick={this.props.triggerLogin}>Google login</button>
+        </div>
+      )
+    } else {
+      return (
+        <div className="login">
         <p>logged in</p>
+        <p>Hello {this.props.data.displayName}</p>
+        {/* <img src={this.props.data.photoURL} alt=""/> */}
+        <input type="text" placeholder="nickname" value={this.state.nickname} onChange={i => this.handleChange(i)}/>
+        <button onClick={i => this.updateNickname(i)}>update nickname</button>
         <button onClick={this.props.triggerLogout}>logout</button>
-      </div>
-    )
-  }
+        </div>
+      )
+    }
   }
 }
 
@@ -37,25 +67,25 @@ class Main extends React.Component {
       userData: null
     }
   }
-
+  
   updateUserData(data) {
     this.setState({
       userData : data
     })
   }
-
+  
   triggerLogin() {
     var provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
     var that = this;
-
+    
     firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
     .then(function() {
       return firebase.auth().signInWithPopup(provider).then(function(result) {
-        // that.setState({
-        //   userData : result
-        // })
+        that.setState(Object.assign(this.state, {
+          userData : result
+        }))
         var token = result.credential.accessToken;
         console.log('user ', result.user);
         console.log('token ', token);
@@ -66,7 +96,7 @@ class Main extends React.Component {
       var errorMessage = error.message;
     });
   }
-
+  
   triggerLogout() {
     var that = this;
     firebase.auth().signOut().then(function(){
@@ -77,15 +107,22 @@ class Main extends React.Component {
       console.error('sign out error', error);
     }
   }
-
+  
+  updateNickname(name) {
+    firebase.database().ref('users/' + this.state.userData.uid).set({
+      nickname: name
+    })
+  }
+  
   render() {
     return(
       <div>
-        <Login 
-          updateUserData={i => this.updateUserData(i)}
-          triggerLogin={i => this.triggerLogin(i)}
-          triggerLogout={i => this.triggerLogout(i)}
-          data={this.state.userData}/>
+      <Login 
+      updateUserData={i => this.updateUserData(i)}
+      triggerLogin={i => this.triggerLogin(i)}
+      triggerLogout={i => this.triggerLogout(i)}
+      updateNickname={i => this.updateNickname(i)}
+      data={this.state.userData}/>
       </div>
     )
   }
@@ -100,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function(){
     storageBucket: "snapstore-chetan.appspot.com",
     messagingSenderId: "365243134582"
   };
-
+  
   if (!firebase.apps.length) {
     firebase.initializeApp(config);
   }
