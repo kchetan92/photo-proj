@@ -51,13 +51,14 @@ class Login extends React.Component {
 class Photos extends React.Component {
   constructor(props) {
     super(props);
-
+    
     this.state = {
       picName : '',
       pics : []
     }
+    this.fileName = ''
   }
-
+  
   componentWillReceiveProps(nextProps) {
     if(nextProps.albumPath || nextProps.selected && nextProps.selected.name) {
       var that = this;
@@ -71,52 +72,98 @@ class Photos extends React.Component {
       albumRef.on('value', function(snapshot) {
         var list = [];
         snapshot.forEach(function(child) {
-          list.push({
-            "name" : child.val()['name'],
-            "key" : child.key,
-          })
-        });
+          var obj = {
+            "key" : child.key
+          }
 
+          if(child.val()['name']) {
+            obj["name"] =  child.val()['name']
+          } else if(child.val()['link']) {
+            obj["link"] =  child.val()['link']
+          }
+          list.push(obj);
+        });
+        
         that.setState(Object.assign(that.state, {
           pics : list
         }));
       });
-
+      
     };
   }
   
   handlePicChange(event) {
-    this.setState(Object.assign(this.state, { picName: event.target.value }));
+    // this.setState(Object.assign(this.state, { picName: event.target.files[0] }));
+    this.fileName = event.target.files[0];
   };
+  
+  addPhoto(i) {
+    i.preventDefault();
+    
+    if (!this.fileName.type.match('image.*')) {
+      alert('Only Image files allowed');
+    }
+    
+    const ref = firebase.storage().ref('/store/');
+    var timestampName = ((+new Date()) + this.fileName.name).replace(/[^a-z0-9]/gi, '_').toLowerCase();;
 
-  addPhoto() {
-    if(this.state.picName !== '' && this.props.selected) {
+    
+    const task = ref.child(timestampName).put(this.fileName, {});
+    
+    task.then((snapshot) => {
+      console.log(snapshot.downloadURL);
+      
       var oneAlbum = [this.state.newAlbum];
       var ref = firebase.database().ref(this.props.path + this.props.selected.key + '/photos');
-      var key = ref.push({name: this.state.picName});
-    }
+      var key = ref.push({link: timestampName});
+    });
+    
+    // if(this.state.picName !== '' && this.props.selected) {
+    //   var oneAlbum = [this.state.newAlbum];
+    //   var ref = firebase.database().ref(this.props.path + this.props.selected.key + '/photos');
+    //   var key = ref.push({name: this.state.picName});
+    // }
+    
   }
-
+  
   deletePhoto(i, name) {
-    firebase.database().ref(this.props.path + this.props.selected.key + '/photos/' + name).remove();
+    var that = this;
+    firebase.storage().ref('/store/').child(name.link).delete().then(function(){
+      firebase.database().ref(that.props.path + that.props.selected.key + '/photos/' + name.key).remove();
+    })
   }
-
+  
   render() {
     if(this.props.albumPath || this.props.selected && this.props.selected.name) {
       var nameAlbum = this.props.selected ? this.props.selected.name : ''
-      const picList = this.state.pics.map((name) =>
-      <li key={name.key}>
-        {name.name}
-        <button onClick={(i) => {this.deletePhoto(i, name.key)}} >delete</button>
-        </li>)
+      const picList = this.state.pics.map((name) => {
+        if(name.name) {
+          return (
+            <li key={name.key}>
+              {name.name}
+              <button onClick={(i) => {this.deletePhoto(i, name)}} >delete</button>
+            </li>
+          )
+        } else {
+          return (
+            <li key={name.key}>
+              <Pic link={name.link}></Pic>
+              <button onClick={(i) => {this.deletePhoto(i, name)}} >delete</button>
+            </li>
+          )
+        }
+      })
       return(
         <div>
         <p>You selected {nameAlbum || ''}</p>
         <ul>
-          {picList}
+        {picList}
         </ul>
-        <input type="text" placeholder="write photo" value={this.state.picName} onChange={i => this.handlePicChange(i)}/>
-        <button onClick={i => this.addPhoto(i)}>Add a photo</button>
+        <form onSubmit={i => this.addPhoto(i)}>
+        {/* <input type="text" placeholder="write photo" value={this.state.picName} onChange={i => this.handlePicChange(i)}/> */}
+        <input type="file" onChange={i => this.handlePicChange(i)}/>
+        <button type="submit">Add a photo</button>
+        </form>
         </div>
       )
     } else {
@@ -124,6 +171,35 @@ class Photos extends React.Component {
         <p>Select an album</p>
       )
     }
+  }
+}
+
+class Pic extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      link: ''
+    }
+    this.updateLink(this.props.link)
+  }
+
+  updateLink(glink) {
+    var that = this;
+    firebase.storage().ref('store/').child(glink).getDownloadURL().then(function(url) {
+      that.setState({
+        link: url
+      });
+    })
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.updateLink(nextProps.link)
+  }
+
+  render() {
+    return(
+      <img src={this.state.link} alt=""/>
+    )
   }
 }
 
@@ -137,10 +213,10 @@ class Albums extends React.Component {
       albumPath: ''
     }
     
-
+    
     
   }
-
+  
   componentWillReceiveProps(nextProps) {
     if(nextProps.data) {
       var that = this;
@@ -154,23 +230,23 @@ class Albums extends React.Component {
             "key" : child.key,
           })
         });
-
+        
         that.setState(Object.assign(that.state, {
           albums : list
         }));
       });
-
+      
     };
   }
-
+  
   handleChange(event) {
     this.setState(Object.assign(this.state, {newAlbum: event.target.value}));
   }
-
+  
   handlePathChange(event) {
     this.setState(Object.assign(this.state, {albumPath : event.target.value}));
   }
-
+  
   addAlbum() {
     if(this.state.newAlbum !== '') {
       var oneAlbum = [this.state.newAlbum]
@@ -178,13 +254,13 @@ class Albums extends React.Component {
       var key = ref.push({name: this.state.newAlbum})
     }
   }
-
+  
   showAlbum() {
     this.setState(Object.assign(this.state, {
       albumPath: ''
     }))
   }
-
+  
   selectAlbum(i, name) {
     this.setState(Object.assign(this.state, {
       selectedAlbum: name
@@ -196,8 +272,8 @@ class Albums extends React.Component {
     if(!this.props.data) {
       return (
         <div>
-          <input val={this.state.albumPath} onChange={i => this.handlePathChange(i)} type="text" placeholder="enter path"/>
-          <Photos albumPath={this.state.albumPath}/>
+        <input val={this.state.albumPath} onChange={i => this.handlePathChange(i)} type="text" placeholder="enter path"/>
+        <Photos albumPath={this.state.albumPath}/>
         </div>
       )
     } else {
@@ -206,13 +282,13 @@ class Albums extends React.Component {
     )
     return (
       <div>
-        <p>Logged in alright</p>
-        <ul>
-          {albumList}
-        </ul>
-        <input type="text" placeholder="album name" value={this.state.newAlbum} onChange={i => this.handleChange(i)}/>
-        <button onClick={i => this.addAlbum()} >add album</button>
-        <Photos selected={this.state.selectedAlbum} path={'/users/' + this.props.data.uid + '/albums/'} />
+      <p>Logged in alright</p>
+      <ul>
+      {albumList}
+      </ul>
+      <input type="text" placeholder="album name" value={this.state.newAlbum} onChange={i => this.handleChange(i)}/>
+      <button onClick={i => this.addAlbum()} >add album</button>
+      <Photos selected={this.state.selectedAlbum} path={'/users/' + this.props.data.uid + '/albums/'} />
       </div>
     )
   }
