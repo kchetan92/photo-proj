@@ -30,12 +30,15 @@ class Login extends React.Component {
     if(!this.props.data) {
       return (
         <div className="login">
-        <button onClick={this.props.triggerLogin}>Google login</button>
+            <h1 className="title">SnapStore</h1>
+            <h2 className="subtitle">SnapStore is the place to share and save photos.</h2>
+            <p>by <a target="_blank" href="http://kchetan.com">Chetan Keshav</a></p>
+        <button className="pure-button pure-button-primary" onClick={this.props.triggerLogin}>Google login</button>
         </div>
       )
     } else {
       return (
-        <div className="login">
+        <div className="login-loaded">
         <p>logged in</p>
         <p>Hello {this.props.data.displayName}</p>
         {/* <img src={this.props.data.photoURL} alt=""/> */}
