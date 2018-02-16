@@ -72,10 +72,12 @@ class Photos extends React.Component {
       picName : '',
       pics : []
     }
-    this.fileName = ''
+    this.fileName = '';
+    this.updateProps(this.props);
   }
-  
-  componentWillReceiveProps(nextProps) {
+
+  updateProps(nextProps) {
+    debugger;
     if(nextProps.albumPath || nextProps.selected && nextProps.selected.name) {
       var that = this;
       var path = '';
@@ -106,6 +108,10 @@ class Photos extends React.Component {
       });
       
     };
+  }
+  
+  componentWillReceiveProps(nextProps) {
+    this.updateProps(nextProps);
   }
   
   handlePicChange(event) {
@@ -150,6 +156,7 @@ class Photos extends React.Component {
   }
   
   render() {
+    
     if(this.props.albumPath || this.props.selected && this.props.selected.name) {
       var nameAlbum = this.props.selected ? this.props.selected.name : ''
       const picList = this.state.pics.map((name) => {
@@ -161,6 +168,7 @@ class Photos extends React.Component {
             </li>
           )
         } else {
+          debugger;
           return (
             <li className="pure-u-1-4" key={name.key}>
             <Pic link={name.link}></Pic>
@@ -171,10 +179,12 @@ class Photos extends React.Component {
           )
         }
       })
+      var shareLink = encodeURI('/?album='+(this.props.albumPath || this.props.path+this.props.selected.key));
       return(
         <div>
         <p>You selected {nameAlbum || ''}</p>
-        <ul class="piclist">
+        <p><a href="share" href={shareLink}>Share</a></p>
+        <ul className="piclist">
         {picList}
         </ul>
         <form onSubmit={i => this.addPhoto(i)}>
@@ -224,15 +234,17 @@ class Pic extends React.Component {
 class Albums extends React.Component {
   constructor(props) {
     super(props);
+
+    var url_string = window.location.href;
+    var url = new URL(url_string);
+    var albumPath = url.searchParams.get("album");
+
     this.state = {
       albums : [],
       newAlbum : '',
       selectedAlbum : {},
-      albumPath: ''
+      albumPath: albumPath || ''
     }
-    
-    
-    
   }
   
   componentWillReceiveProps(nextProps) {
@@ -260,11 +272,7 @@ class Albums extends React.Component {
   handleChange(event) {
     this.setState(Object.assign(this.state, {newAlbum: event.target.value}));
   }
-  
-  handlePathChange(event) {
-    this.setState(Object.assign(this.state, {albumPath : event.target.value}));
-  }
-  
+
   addAlbum() {
     if(this.state.newAlbum !== '') {
       var oneAlbum = [this.state.newAlbum]
@@ -281,17 +289,23 @@ class Albums extends React.Component {
   
   selectAlbum(i, name) {
     this.setState(Object.assign(this.state, {
-      selectedAlbum: name
+      selectedAlbum: name,
     }))
   }
   
   
   render() {
+    
     if(!this.props.data) {
+
+      var url_string = window.location.href;
+      var url = new URL(url_string);
+      var albumPath = url.searchParams.get("album");
+      
       return (
         <div>
-        <input val={this.state.albumPath} onChange={i => this.handlePathChange(i)} type="text" placeholder="enter path"/>
-        <Photos albumPath={this.state.albumPath}/>
+        {/* <input val={this.state.albumPath} onChange={i => this.handlePathChange(i)} type="text" placeholder="enter path"/> */}
+        <Photos albumPath={albumPath}/>
         </div>
       )
     } else {
@@ -388,6 +402,7 @@ class Main extends React.Component {
   }
   
   render() {
+    
     return(
       <div>
       <Login 
