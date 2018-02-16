@@ -1,6 +1,13 @@
 {
   "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null"
+    "users": {
+      "albums" : {
+        ".read": true,
+    		".write": "auth != null"
+      }
+    }
+    
   }
 }
+
+

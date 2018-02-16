@@ -212,6 +212,7 @@ class Pic extends React.Component {
   }
   
   updateLink(glink) {
+    debugger;
     var that = this;
     firebase.storage().ref('store/').child(glink).getDownloadURL().then(function(url) {
       that.setState({
