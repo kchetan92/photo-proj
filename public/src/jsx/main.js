@@ -30,21 +30,34 @@ class Login extends React.Component {
     if(!this.props.data) {
       return (
         <div className="login">
-            <h1 className="title">SnapStore</h1>
-            <h2 className="subtitle">SnapStore is the place to share and save photos.</h2>
-            <p>by <a target="_blank" href="http://kchetan.com">Chetan Keshav</a></p>
+        <h1 className="title">SnapStore</h1>
+        <h2 className="subtitle">The place to share and save photos.</h2>
+        <p>by <a target="_blank" href="http://kchetan.com">Chetan Keshav</a></p>
         <button className="pure-button pure-button-primary" onClick={this.props.triggerLogin}>Google login</button>
         </div>
       )
     } else {
       return (
         <div className="login-loaded">
-        <p>logged in</p>
-        <p>Hello {this.props.data.displayName}</p>
         {/* <img src={this.props.data.photoURL} alt=""/> */}
-        <input type="text" placeholder="nickname" value={this.state.nickname} onChange={i => this.handleChange(i)}/>
-        <button onClick={i => this.updateNickname(i)}>update nickname</button>
-        <button onClick={this.props.triggerLogout}>logout</button>
+        <div className="header">
+          <div className="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
+          <p className="pure-menu-heading">SnapStore</p>
+          
+            <ul className="pure-menu-list">
+              <li className="pure-menu-item pure-menu-selected">
+                <img src={this.props.data.photoURL} className="dp" alt=""/>
+              </li>
+              <li className="pure-menu-item pure-menu-selected">
+                 {this.props.data.displayName}
+              </li>
+              <li className="pure-menu-item pure-menu-selected">
+                  <button className="pure-button" onClick={this.props.triggerLogout}>logout</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+        {/* <input type="text" placeholder="nickname" value={this.state.nickname} onChange={i => this.handleChange(i)}/> */}
         </div>
       )
     }
@@ -78,7 +91,7 @@ class Photos extends React.Component {
           var obj = {
             "key" : child.key
           }
-
+          
           if(child.val()['name']) {
             obj["name"] =  child.val()['name']
           } else if(child.val()['link']) {
@@ -109,7 +122,7 @@ class Photos extends React.Component {
     
     const ref = firebase.storage().ref('/store/');
     var timestampName = ((+new Date()) + this.fileName.name).replace(/[^a-z0-9]/gi, '_').toLowerCase();;
-
+    
     
     const task = ref.child(timestampName).put(this.fileName, {});
     
@@ -143,15 +156,17 @@ class Photos extends React.Component {
         if(name.name) {
           return (
             <li key={name.key}>
-              {name.name}
-              <button onClick={(i) => {this.deletePhoto(i, name)}} >delete</button>
+            {name.name}
+            <button onClick={(i) => {this.deletePhoto(i, name)}} >delete</button>
             </li>
           )
         } else {
           return (
-            <li key={name.key}>
-              <Pic link={name.link}></Pic>
-              <button onClick={(i) => {this.deletePhoto(i, name)}} >delete</button>
+            <li className="pure-u-1-4" key={name.key}>
+            <Pic link={name.link}></Pic>
+            <a className="trash" onClick={(i) => {this.deletePhoto(i, name)}} >
+              <img src="/img/trash.png" alt="delete"/>
+            </a>
             </li>
           )
         }
@@ -159,7 +174,7 @@ class Photos extends React.Component {
       return(
         <div>
         <p>You selected {nameAlbum || ''}</p>
-        <ul>
+        <ul class="piclist">
         {picList}
         </ul>
         <form onSubmit={i => this.addPhoto(i)}>
@@ -185,7 +200,7 @@ class Pic extends React.Component {
     }
     this.updateLink(this.props.link)
   }
-
+  
   updateLink(glink) {
     var that = this;
     firebase.storage().ref('store/').child(glink).getDownloadURL().then(function(url) {
@@ -194,11 +209,11 @@ class Pic extends React.Component {
       });
     })
   }
-
+  
   componentWillReceiveProps(nextProps) {
     this.updateLink(nextProps.link)
   }
-
+  
   render() {
     return(
       <img src={this.state.link} alt=""/>
@@ -281,17 +296,25 @@ class Albums extends React.Component {
       )
     } else {
       const albumList = this.state.albums.map((name) =>
-      <li key={name.key} onClick={(i) => this.selectAlbum(i, name)}>{name.name} {'/users/' + this.props.data.uid + '/albums/' + name.key}</li>
+      <li className="pure-u-1-4" 
+        key={name.key} 
+        link={'/users/' + this.props.data.uid + '/albums/' + name.key} 
+        onClick={(i) => this.selectAlbum(i, name)}>
+        {name.name}
+      </li>
     )
     return (
-      <div>
-      <p>Logged in alright</p>
-      <ul>
-      {albumList}
-      </ul>
-      <input type="text" placeholder="album name" value={this.state.newAlbum} onChange={i => this.handleChange(i)}/>
-      <button onClick={i => this.addAlbum()} >add album</button>
-      <Photos selected={this.state.selectedAlbum} path={'/users/' + this.props.data.uid + '/albums/'} />
+      <div className="albums">
+        <h3>Albums</h3>
+        <ul>
+        {albumList}
+          <li className="pure-u-1-4 pure-form">
+            <input type="text" placeholder="album name" value={this.state.newAlbum} onChange={i => this.handleChange(i)}/>
+            <button className="pure-button" onClick={i => this.addAlbum()} >add album</button>
+          </li>
+        </ul>
+
+        <Photos selected={this.state.selectedAlbum} path={'/users/' + this.props.data.uid + '/albums/'} />
       </div>
     )
   }

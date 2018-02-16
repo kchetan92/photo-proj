@@ -1,4 +1,6 @@
 @import "normalize.scss";
+$bg-color: #34495e;
+$lt-blue: #3498db;
 
 .body {
   font-family: 'Open Sans', sans-serif;
@@ -17,5 +19,81 @@
   }
   a {
     color: white;
+  }
+}
+
+.header {
+  height: 50px;
+  line-height: 50px;
+  background-color: $bg-color;
+  .pure-menu-heading {
+    color: white;
+    margin: 0 50px;
+    padding: 0;
+    text-transform: none;
+  }
+  .dp {
+    height: 50px;
+    display: inline;
+    border-radius: 100px;
+  }
+}
+
+.login-loaded {
+  .pure-menu-list {
+    color: white;
+    float: right;
+    background-color: $bg-color;
+    margin: 0 50px;
+  }
+}
+
+.albums {
+  max-width: 1200px;
+  margin: 0 auto;
+  ul {
+    padding: 0;
+    li {
+      margin: 0 20px 20px 0;
+      padding: 15px;
+      height: 36px; 
+      line-height: 36px;
+      background-color: $lt-blue;
+      color: white;
+      cursor: pointer;
+      input {
+        color: black;
+      }
+    }
+  }
+}
+
+ul.piclist {
+  li {
+    background: white;
+    padding: 0;
+    height:300px;
+    position: relative;
+    img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+    &:hover {
+      .trash {
+        display: inline;
+      }
+    }
+  }
+  .trash {
+    position: absolute;
+    top: 0;
+    right: 0;
+    opacity: 0.5;
+    cursor: pointer;
+      img {
+      width:30px;
+      height: 30px;
+    }
+    display: none;
   }
 }
